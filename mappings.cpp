@@ -26,7 +26,7 @@ void Mappings::loadJSON(const QString &filename)
     QFile mappingsFile(filename);
     mappingsFile.open(QIODevice::ReadOnly);
     auto jsonMappings = QJsonDocument::fromJson(mappingsFile.readAll()).toVariant().toMap();
-    for(auto joypad: jsonMappings.keys()) {
+    for(auto &joypad: jsonMappings.keys()) {
         auto joypadMap = jsonMappings[joypad].toMap();
         for(auto indiServer: joypadMap.keys()) {
             auto indiServerMap = joypadMap[indiServer].toMap();
@@ -77,7 +77,7 @@ void Mappings::buttonCallback(int buttonNumber, int value)
 {
     auto mapping = this->mapping("button", buttonNumber);
     auto device = this->deviceFor(mapping);
-    if(mapping.valid()) {
+    if(mapping.valid() && device) {
         bool pressed = value != 0;
         if(mapping.invert) {
             pressed = !pressed;
