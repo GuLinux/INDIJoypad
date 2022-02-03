@@ -31,12 +31,13 @@ void Focuser::onAxis(const Action &action, double value)
         qDebug() << "Focuser: stopping repeat motion";
         repeatTimer.reset();
     } else {
-        if(!repeatTimer) {
+        if(repeat > 0 && !repeatTimer) {
             repeatTimer = std::make_unique<QTimer>();
             connect(repeatTimer.get(), &QTimer::timeout, this, &Focuser::moveFocuser);
             repeatTimer->start(repeat * 1000);
-            moveFocuser();
+
         }
+        moveFocuser();
     }
 }
 
