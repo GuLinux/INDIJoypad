@@ -10,17 +10,18 @@ public:
     Focuser(INDI::Focuser *focuser);
     ~Focuser();
     typedef std::shared_ptr<Focuser> ptr;
-    // INDIDevice interface
-public slots:
-    void onJoystick(const Action &action, double magnitude, double angle);
-    void onAxis(const Action &action, double value);
-    void onButton(const Action &action, int value);
 private:
     void moveFocuser();
     INDI::Focuser *indiFocuser;
     std::unique_ptr<QTimer> repeatTimer;
     int newSteps;
     enum { INWARDS = -1, OUTWARDS = 1 } newDirection;
+
+    // INDIDevice interface
+public slots:
+    void onJoystick(const Action<JoystickPayload> &action);
+    void onAxis(const Action<AxisPayload> &action);
+    void onButton(const Action<ButtonPayload> &action);
 };
 
 #endif // FOCUSER_H

@@ -12,39 +12,6 @@ Focuser::~Focuser()
 
 }
 
-void Focuser::onJoystick(const Action &action, double magnitude, double angle)
-{
-}
-
-void Focuser::onAxis(const Action &action, double value)
-{
-    auto minSteps = action.parameters.value("steps-min", 1).toInt();
-    auto maxSteps = action.parameters.value("steps-max", 10).toInt();
-    auto repeat = action.parameters.value("repeat", 0.1).toDouble();
-
-    newSteps = (maxSteps - minSteps) * abs(value) + minSteps;
-    newDirection = value >= 0 ? OUTWARDS : INWARDS;
-
-    qDebug() << name() << " onAxis: min=" << minSteps << ", max=" << maxSteps << ", repeat=" << repeat << ", steps=" << newSteps << ", direction=" << newDirection;
-
-    if(value == 0) {
-        qDebug() << "Focuser: stopping repeat motion";
-        repeatTimer.reset();
-    } else {
-        if(repeat > 0 && !repeatTimer) {
-            repeatTimer = std::make_unique<QTimer>();
-            connect(repeatTimer.get(), &QTimer::timeout, this, &Focuser::moveFocuser);
-            repeatTimer->start(repeat * 1000);
-
-        }
-        moveFocuser();
-    }
-}
-
-void Focuser::onButton(const Action &action, int value)
-{
-}
-
 void Focuser::moveFocuser()
 {
     auto relativePositionProperty = indiFocuser->getNumber("REL_FOCUS_POSITION");
@@ -77,6 +44,40 @@ void Focuser::moveFocuser()
         client()->sendNewSwitch(direction);
         client()->sendNewNumber(relativePositionProperty);
     }
+}
+
+void Focuser::onJoystick(const Action<JoystickPayload> &action)
+{
+}
+
+void Focuser::onAxis(const Action<AxisPayload> &action)
+{
+    auto minSteps = action.parameters.value("steps-min", 1).toInt();
+    auto maxSteps = action.parameters.value("steps-max", 10).toInt();
+    auto repeat = action.parameters.value("repeat", 0.1).toDouble();
+
+    newSteps = (maxSteps - minSteps) * action.value.magnitude + minSteps;
+    newDirection = action.value.direction == AxisPayload::FORWARD ? OUTWARDS : INWARDS;
+
+    qDebug() << name() << " onAxis: min=" << minSteps << ", max=" << maxSteps << ", repeat=" << repeat << ", steps=" << newSteps << ", direction=" << newDirection;
+
+    if(action.value.magnitude == 0) {
+        qDebug() << "Focuser: stopping repeat motion";
+        repeatTimer.reset();
+    } else {
+        if(repeat > 0 && !repeatTimer) {
+            repeatTimer = std::make_unique<QTimer>();
+            connect(repeatTimer.get(), &QTimer::timeout, this, &Focuser::moveFocuser);
+            repeatTimer->start(repeat * 1000);
+
+        }
+        moveFocuser();
+    }
+}
+
+void Focuser::onButton(const Action<ButtonPayload> &action)
+{
+
 }
 
 /*

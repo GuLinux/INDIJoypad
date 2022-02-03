@@ -64,33 +64,32 @@ void Telescope::setSlewSpeed()
     }
 }
 
-void Telescope::onJoystick(const Action &action, double magnitude, double angle)
+void Telescope::onJoystick(const Action<JoystickPayload> &action)
 {
 
 }
 
-void Telescope::onAxis(const Action &action, double value)
+void Telescope::onAxis(const Action<AxisPayload> &action)
 {
     if(action.action == "slew") {
         auto axis = action.parameters.value("axis") == "NS" ? AXIS_DEC : AXIS_RA;
-        if(value == 0) {
+        if(action.value.magnitude == 0) {
             axisSpeed[axis] = QString();
             stopSlew(axis);
         } else {
-            auto slewSpeed = action.parameters.value("speed", magnitudeToSpeed(std::abs(value))).toString();
+            auto slewSpeed = action.parameters.value("speed", magnitudeToSpeed(action.value.magnitude)).toString();
             axisSpeed[axis] = slewSpeed;
             setSlewSpeed();
-            int8_t valueSign = value < 0 ? -1 : 1;
             static const QMap<QString, QMap<int8_t, QString>> directions {
-                { AXIS_DEC, { { 1, DIRECTION_N}, { -1, DIRECTION_S}}},
-                { AXIS_RA, { { 1, DIRECTION_W}, { -1, DIRECTION_E}}},
+                { AXIS_DEC, { { AxisPayload::FORWARD, DIRECTION_N}, { AxisPayload::BACKWARD, DIRECTION_S}}},
+                { AXIS_RA, { { AxisPayload::FORWARD, DIRECTION_W}, { AxisPayload::BACKWARD, DIRECTION_E}}},
             };
-            slew(axis, directions[axis][valueSign]);
+            slew(axis, directions[axis][action.value.direction]);
         }
     }
 }
 
-void Telescope::onButton(const Action &action, int value)
+void Telescope::onButton(const Action<ButtonPayload> &action)
 {
 
 }

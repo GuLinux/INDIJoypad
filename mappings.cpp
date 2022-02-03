@@ -2,16 +2,9 @@
 #include <QFile>
 #include <QCoreApplication>
 #include <QJsonDocument>
+#include "action.h"
 
 using namespace std::placeholders;
-
-QDebug operator<< (QDebug d, const Action &action) {
-    d.nospace() << "{device=" << action.deviceName
-                << ", type=" << action.deviceType
-                <<", action=" << action.action
-               << ", params=" << action.parameters << "}";
-    return d.space();
-}
 
 Mappings::Mappings(INDIClient &indiClient, JoyStickDriver &joystickDriver) : indiClient{indiClient}, joystickDriver{joystickDriver}
 {
@@ -32,15 +25,15 @@ void Mappings::load(const QString &filename)
             auto indiServerMap = joypadMap[indiServer].toMap();
             for(auto trigger: indiServerMap.keys()) {
                 auto actionMap = indiServerMap[trigger].toMap();
-                Action action{
+                Mapping mapping{
                     actionMap.take("action").toString(),
                     actionMap.take("deviceName").toString(),
                     actionMap.take("deviceType").toString(),
+                    actionMap.contains("rotate") ? actionMap.take("rotate").toDouble() : 0,
                     actionMap.contains("invert") ? actionMap.take("invert").toBool() : false,
                     actionMap,
                 };
-                qDebug() << "Mappings action: " << action << "to indiServer" << indiServer << ", joypad: " << joypad;
-                joypadsMappings[joypad][indiServer][trigger] = action;
+                joypadsMappings[joypad][indiServer][trigger] = mapping;
             }
         }
     }
@@ -48,47 +41,61 @@ void Mappings::load(const QString &filename)
 
 void Mappings::joystickCallback(int joystickNumber, double magnitude, double angle)
 {
+    auto mapping = this->mapping("joystick", joystickNumber);
+    auto device = this->deviceFor(mapping);
 
+    angle += mapping.rotate;
+    while(angle < 0) angle += 360.0;
+    while(angle > 360) angle -= 360.0;
+
+    if(mapping.valid() && device) {
+        Action<JoystickPayload> action{mapping.action, JoystickPayload{magnitude, angle}, mapping.parameters};
+        QMetaObject::invokeMethod(qApp, [=] { device->onJoystick(action); });
+    }
 }
 
 void Mappings::axisCallback(int axisNumber, double value)
 {
-    auto action = this->action("axis", axisNumber);
-    auto device = this->deviceFor(action);
-    if(action.invert) {
-        value *= -1;
-    }
-    qDebug() << "action: " << action << ", device: " << (bool)device;
-    if(action.valid() && device) {
-        qDebug() << "Axis callback present: " << axisNumber << value << ": " << action;
-        QMetaObject::invokeMethod(qApp, [=] {
-            device->onAxis(action, value/32767);
-        });
+    auto mapping = this->mapping("axis", axisNumber);
+    auto device = this->deviceFor(mapping);
+
+    if(mapping.valid() && device) {
+        value = value/32767 * (mapping.invert ? -1 : +1);
+        Action<AxisPayload> action{mapping.action, AxisPayload{abs(value), value<0 ? AxisPayload::BACKWARD : AxisPayload::FORWARD}, mapping.parameters};
+        QMetaObject::invokeMethod(qApp, [=] { device->onAxis(action); });
     }
 }
 
 void Mappings::buttonCallback(int buttonNumber, int value)
 {
-
+    auto mapping = this->mapping("button", buttonNumber);
+    auto device = this->deviceFor(mapping);
+    if(mapping.valid()) {
+        bool pressed = value != 0;
+        if(mapping.invert) {
+            pressed = !pressed;
+        }
+        Action<ButtonPayload> action{mapping.action, ButtonPayload{pressed}, mapping.parameters};
+        QMetaObject::invokeMethod(qApp, [=] { device->onButton(action); });
+    }
 }
 
-Action Mappings::action(const QString &type, int number) const
+Mappings::Mapping Mappings::mapping(const QString &type, int number) const
 {
     auto key = QString("%1-%2").arg(type).arg(number);
     auto joypadName = QString(joystickDriver.getName()).trimmed();
-    qDebug() << "searching for " << key << "in " << indiClient.server() << "/" << joypadName;
     auto joypadMappings = this->joypadsMappings[joypadName];
     auto indiServerMappings = joypadMappings.value(indiClient.server(), joypadMappings.value("*"));
     return indiServerMappings[key];
 }
 
-INDIDevice::ptr Mappings::deviceFor(const Action &action) const
+INDIDevice::ptr Mappings::deviceFor(const Mapping &mapping) const
 {
-    if(action.deviceType == "telescope") {
-        return indiClient.telescopes().value(action.deviceName);
+    if(mapping.deviceType == "telescope") {
+        return indiClient.telescopes().value(mapping.deviceName);
     }
-    if(action.deviceType == "focuser") {
-        return indiClient.focusers().value(action.deviceName);
+    if(mapping.deviceType == "focuser") {
+        return indiClient.focusers().value(mapping.deviceName);
     }
     return INDIDevice::ptr();
 }

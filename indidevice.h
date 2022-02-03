@@ -2,12 +2,12 @@
 #define INDIDEVICE_H
 #include <QObject>
 #include <memory>
+#include "action.h"
 
 namespace INDI {
     class BaseDevice;
     class BaseClientQt;
 }
-struct Action;
 class INDIDevice : public QObject
 {
 public:
@@ -16,9 +16,9 @@ public:
     typedef std::shared_ptr<INDIDevice> ptr;
     QString name() const;
 public slots:
-    virtual void onJoystick(const Action &action, double magnitude, double angle) = 0;
-    virtual void onAxis(const Action &action, double value) = 0;
-    virtual void onButton(const Action &action, int value) = 0;
+    virtual void onJoystick(const Action<JoystickPayload> &action) = 0;
+    virtual void onAxis(const Action<AxisPayload> &action) = 0;
+    virtual void onButton(const Action<ButtonPayload> &action) = 0;
 private:
     INDI::BaseDevice *m_device;
 

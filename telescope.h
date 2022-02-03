@@ -31,9 +31,9 @@ private:
 
     // INDIDevice interface
 public slots:
-    void onAxis(const Action &action, double value);
-    void onButton(const Action &action, int value);
-    void onJoystick(const Action &action, double magnitude, double angle);
+    void onAxis(const Action<AxisPayload> &action);
+    void onButton(const Action<ButtonPayload> &action);
+    void onJoystick(const Action<JoystickPayload> &action);
 };
 
 #endif // TELESCOPE_H
