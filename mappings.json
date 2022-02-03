@@ -28,7 +28,8 @@
                 "deviceName": "Focuser Simulator",
                 "action": "focus",
                 "steps-min": 1,
-                "steps-max": 500
+                "steps-max": 500,
+                "invert": true
             },
             "button-1": {
                 "deviceType": "focuser",

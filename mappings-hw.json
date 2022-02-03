@@ -6,7 +6,6 @@
                 "deviceName": "iOptron CEM40",
                 "action": "slew",
                 "axis": "WE",
-                "speed": "9x",
                 "invert": true
             },
 
@@ -15,7 +14,6 @@
                 "deviceName": "iOptron CEM40",
                 "action": "slew",
                 "axis": "NS",
-                "speed": "9x",
                 "invert": true
             },
             "axis-2": {
@@ -30,7 +28,8 @@
                 "deviceName": "MyFocuserPro2",
                 "action": "focus",
                 "steps-min": 1,
-                "steps-max": 500
+                "steps-max": 500,
+                "invert": true
             }
         }
     }
