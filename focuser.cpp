@@ -20,7 +20,7 @@ void Focuser::onAxis(const Action &action, double value)
 {
     auto minSteps = action.parameters.value("steps-min", 1).toInt();
     auto maxSteps = action.parameters.value("steps-max", 10).toInt();
-    auto repeat = action.parameters.value("repeat", 0.5).toDouble();
+    auto repeat = action.parameters.value("repeat", 0.1).toDouble();
 
     newSteps = (maxSteps - minSteps) * abs(value) + minSteps;
     newDirection = value >= 0 ? OUTWARDS : INWARDS;
