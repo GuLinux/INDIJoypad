@@ -9,7 +9,7 @@
 
 #include "indiclient.h"
 #include "joystickdriver.h"
-#include "mapping.h"
+#include "mappings.h"
 
 class INDIJoypadCLI : public QObject {
     Q_OBJECT
@@ -73,7 +73,7 @@ private:
     QCommandLineParser &parser;
     INDIClient indiClient;
     JoyStickDriver joystickDriver;
-    Mapping mapping;
+    Mappings mapping;
 signals:
     void exit(int);
 };

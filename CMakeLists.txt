@@ -26,7 +26,7 @@ set(CORE_SOURCES
     indiclient.cpp
     telescope.cpp
     settings.cpp
-    mapping.cpp
+    mappings.cpp
     indidevice.cpp
     focuser.cpp
 )

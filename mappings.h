@@ -7,6 +7,20 @@
 #include "indidevice.h"
 #include "joystickdriver.h"
 
+struct JoystickPayload {
+    double magnitude;
+    double angle;
+};
+
+struct AxisPayload {
+    double magnitude;
+    enum { FORWARD = +1, BACKWARD = -1 } direction;
+};
+
+struct ButtonPayload {
+    bool pressed;
+};
+
 struct Action {
     QString action;
     QString deviceName;
@@ -16,10 +30,10 @@ struct Action {
     bool valid() const { return !action.isEmpty() && !deviceName.isEmpty() && !deviceType.isEmpty(); }
 };
 
-class Mapping
+class Mappings
 {
 public:
-    Mapping(INDIClient &indiClient, JoyStickDriver &joystickDriver);
+    Mappings(INDIClient &indiClient, JoyStickDriver &joystickDriver);
     void load(const QString &filename);
     typedef QMap<QString, Action> ActionMappings;
     typedef QMap<QString, ActionMappings> INDIMappings;

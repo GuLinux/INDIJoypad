@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <algorithm>
 
-#include "mapping.h"
+#include "mappings.h"
 
 const QString Telescope::DIRECTION_N = "MOTION_NORTH";
 const QString Telescope::DIRECTION_E = "MOTION_EAST";

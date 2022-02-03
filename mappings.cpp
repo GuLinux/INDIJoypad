@@ -1,4 +1,4 @@
-#include "mapping.h"
+#include "mappings.h"
 #include <QFile>
 #include <QCoreApplication>
 #include <QJsonDocument>
@@ -13,14 +13,14 @@ QDebug operator<< (QDebug d, const Action &action) {
     return d.space();
 }
 
-Mapping::Mapping(INDIClient &indiClient, JoyStickDriver &joystickDriver) : indiClient{indiClient}, joystickDriver{joystickDriver}
+Mappings::Mappings(INDIClient &indiClient, JoyStickDriver &joystickDriver) : indiClient{indiClient}, joystickDriver{joystickDriver}
 {
-    joystickDriver.setJoystickCallback(std::bind(&Mapping::joystickCallback, this, _1, _2, _3));
-    joystickDriver.setAxisCallback(std::bind(&Mapping::axisCallback, this, _1, _2));
-    joystickDriver.setButtonCallback(std::bind(&Mapping::buttonCallback, this, _1, _2));
+    joystickDriver.setJoystickCallback(std::bind(&Mappings::joystickCallback, this, _1, _2, _3));
+    joystickDriver.setAxisCallback(std::bind(&Mappings::axisCallback, this, _1, _2));
+    joystickDriver.setButtonCallback(std::bind(&Mappings::buttonCallback, this, _1, _2));
 }
 
-void Mapping::load(const QString &filename)
+void Mappings::load(const QString &filename)
 {
     joypadsMappings.clear();
     QFile mappingsFile(filename);
@@ -39,19 +39,19 @@ void Mapping::load(const QString &filename)
                     actionMap.contains("invert") ? actionMap.take("invert").toBool() : false,
                     actionMap,
                 };
-                qDebug() << "Mapping action: " << action << "to indiServer" << indiServer << ", joypad: " << joypad;
+                qDebug() << "Mappings action: " << action << "to indiServer" << indiServer << ", joypad: " << joypad;
                 joypadsMappings[joypad][indiServer][trigger] = action;
             }
         }
     }
 }
 
-void Mapping::joystickCallback(int joystickNumber, double magnitude, double angle)
+void Mappings::joystickCallback(int joystickNumber, double magnitude, double angle)
 {
 
 }
 
-void Mapping::axisCallback(int axisNumber, double value)
+void Mappings::axisCallback(int axisNumber, double value)
 {
     auto action = this->action("axis", axisNumber);
     auto device = this->deviceFor(action);
@@ -67,12 +67,12 @@ void Mapping::axisCallback(int axisNumber, double value)
     }
 }
 
-void Mapping::buttonCallback(int buttonNumber, int value)
+void Mappings::buttonCallback(int buttonNumber, int value)
 {
 
 }
 
-Action Mapping::action(const QString &type, int number) const
+Action Mappings::action(const QString &type, int number) const
 {
     auto key = QString("%1-%2").arg(type).arg(number);
     auto joypadName = QString(joystickDriver.getName()).trimmed();
@@ -82,7 +82,7 @@ Action Mapping::action(const QString &type, int number) const
     return indiServerMappings[key];
 }
 
-INDIDevice::ptr Mapping::deviceFor(const Action &action) const
+INDIDevice::ptr Mappings::deviceFor(const Action &action) const
 {
     if(action.deviceType == "telescope") {
         return indiClient.telescopes().value(action.deviceName);
@@ -92,7 +92,4 @@ INDIDevice::ptr Mapping::deviceFor(const Action &action) const
     }
     return INDIDevice::ptr();
 }
-
-
-
 

@@ -1,6 +1,6 @@
 #include "focuser.h"
 #include <libindi/baseclientqt.h>
-#include "mapping.h"
+#include "mappings.h"
 #include <QTimer>
 
 Focuser::Focuser(INDI::Focuser *focuser) : INDIDevice(focuser), indiFocuser(focuser)
