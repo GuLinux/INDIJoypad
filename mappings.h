@@ -12,7 +12,9 @@ class Mappings
 public:
     Mappings(INDIClient &indiClient, JoyStickDriver &joystickDriver);
     void load(const QString &filename);
+
 private:
+    void loadJSON(const QString &filename);
     struct Mapping {
         QString action;
         QString deviceName;

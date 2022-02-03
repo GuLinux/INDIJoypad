@@ -15,6 +15,13 @@ Mappings::Mappings(INDIClient &indiClient, JoyStickDriver &joystickDriver) : ind
 
 void Mappings::load(const QString &filename)
 {
+    if(filename.endsWith(".json")) {
+        loadJSON(filename);
+    }
+}
+
+void Mappings::loadJSON(const QString &filename)
+{
     joypadsMappings.clear();
     QFile mappingsFile(filename);
     mappingsFile.open(QIODevice::ReadOnly);
