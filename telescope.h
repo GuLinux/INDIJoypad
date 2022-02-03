@@ -1,5 +1,6 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
+#include <QMap>
 #include <memory>
 #include <libindi/inditelescope.h>
 #include "indidevice.h"
@@ -22,9 +23,11 @@ private:
     void slew(const QString &axis, const QString &direction);
     void stopSlew(const QString &axis);
     QString magnitudeToSpeed(double magnitude) const;
-    void setSlewSpeed(const QString &speed);
+    void setSlewSpeed();
 
     INDI::Telescope *indiTelescope;
+
+    QMap<QString, QString> axisSpeed;
 
     // INDIDevice interface
 public slots:

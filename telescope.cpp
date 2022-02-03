@@ -1,5 +1,6 @@
 #include "telescope.h"
 #include <QDebug>
+#include <algorithm>
 
 #include "mapping.h"
 
@@ -47,13 +48,20 @@ QString Telescope::magnitudeToSpeed(double magnitude) const
     return slewRate->at(0)->name;
 }
 
-void Telescope::setSlewSpeed(const QString &speed)
+void Telescope::setSlewSpeed()
 {
     auto slewRate = indiTelescope->getSwitch("TELESCOPE_SLEW_RATE");
     slewRate->reset();
-    slewRate->findWidgetByName(speed.toStdString().c_str())->setState(ISS_ON);
-
-    client()->sendNewSwitch(slewRate);
+    QString speed;
+    std::for_each(slewRate->begin(), slewRate->end(), [&speed, this] (auto &s) {
+        if(axisSpeed.values().contains(s.name)) {
+            speed = s.name;
+        }
+    });
+    if(!speed.isEmpty()) {
+        slewRate->findWidgetByName(speed.toStdString().c_str())->setState(ISS_ON);
+        client()->sendNewSwitch(slewRate);
+    }
 }
 
 void Telescope::onJoystick(const Action &action, double magnitude, double angle)
@@ -66,10 +74,12 @@ void Telescope::onAxis(const Action &action, double value)
     if(action.action == "slew") {
         auto axis = action.parameters.value("axis") == "NS" ? AXIS_DEC : AXIS_RA;
         if(value == 0) {
+            axisSpeed[axis] = QString();
             stopSlew(axis);
         } else {
             auto slewSpeed = action.parameters.value("speed", magnitudeToSpeed(std::abs(value))).toString();
-            setSlewSpeed(slewSpeed);
+            axisSpeed[axis] = slewSpeed;
+            setSlewSpeed();
             int8_t valueSign = value < 0 ? -1 : 1;
             static const QMap<QString, QMap<int8_t, QString>> directions {
                 { AXIS_DEC, { { 1, DIRECTION_N}, { -1, DIRECTION_S}}},
