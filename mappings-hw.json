@@ -1,0 +1,37 @@
+{
+    "USB GAMEPAD 1.05": {
+        "*": {
+            "axis-0": {
+                "deviceType": "telescope",
+                "deviceName": "iOptron CEM40",
+                "action": "slew",
+                "axis": "WE",
+                "speed": "9x",
+                "invert": true
+            },
+
+            "axis-1": {
+                "deviceType": "telescope",
+                "deviceName": "iOptron CEM40",
+                "action": "slew",
+                "axis": "NS",
+                "speed": "9x",
+                "invert": true
+            },
+            "axis-2": {
+                "deviceType": "focuser",
+                "deviceName": "MyFocuserPro2",
+                "action": "focus",
+                "steps-min": 1,
+                "steps-max": 5
+            },
+            "axis-3": {
+                "deviceType": "focuser",
+                "deviceName": "MyFocuserPro2",
+                "action": "focus",
+                "steps-min": 1,
+                "steps-max": 500
+            }
+        }
+    }
+}
