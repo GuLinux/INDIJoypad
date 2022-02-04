@@ -1,0 +1,35 @@
+USB GAMEPAD 1.05:
+  "*":
+    axis-0:
+        deviceType: telescope
+        deviceName: Telescope Simulator
+        action: slew
+        axis: WE
+        invert: true
+
+    axis-1:
+        deviceType: telescope
+        deviceName: Telescope Simulator
+        action: slew
+        axis: NS
+        invert: true
+
+    axis-2:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: focus
+        steps-min: 1
+        steps-max: 5
+
+    axis-3:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: focus
+        steps-min: 10
+        steps-max: 500
+        invert: true
+
+    button-1:
+        deviceType: telescope
+        deviceName: Telescope Simulator
+        action: abort

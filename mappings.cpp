@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include "action.h"
+#include <yaml-cpp/yaml.h>
 
 using namespace std::placeholders;
 
@@ -17,6 +18,8 @@ void Mappings::load(const QString &filename)
 {
     if(filename.endsWith(".json")) {
         loadJSON(filename);
+    } else if(filename.endsWith(".yaml") || filename.endsWith(".yml")) {
+        loadYAML(filename);
     }
 }
 
@@ -44,6 +47,54 @@ void Mappings::loadJSON(const QString &filename)
             }
         }
     }
+}
+
+template<typename T>
+QVariant node2variant(const YAML::Node &node, std::function<QVariant(const T&)> convertFunction = [](const T &t){ return QVariant::fromValue(t); }) {
+    try {
+        return convertFunction(node.as<T>());
+    } catch (YAML::BadConversion) {
+        return QVariant{};
+    }
+}
+
+void Mappings::loadYAML(const QString &filename)
+{
+    YAML::Node mapping = YAML::LoadFile(filename.toStdString());
+    std::for_each(mapping.begin(), mapping.end(), [=](const YAML::iterator::value_type &joypadMapping) {
+        QString joypadName = QString::fromStdString(joypadMapping.first.as<std::string>());
+        std::for_each(joypadMapping.second.begin(), joypadMapping.second.end(), [=](const YAML::iterator::value_type &indiServerMapping) {
+            QString indiServer = QString::fromStdString(indiServerMapping.first.as<std::string>());
+            std::for_each(indiServerMapping.second.begin(), indiServerMapping.second.end(), [=](const YAML::iterator::value_type &actionsMapping) {
+                QString actionTrigger = QString::fromStdString(actionsMapping.first.as<std::string>());
+                Mapping mapping;
+                std::for_each(actionsMapping.second.begin(), actionsMapping.second.end(), [=,&mapping](const YAML::iterator::value_type &parameter){
+                    QString parameterName = QString::fromStdString(parameter.first.as<std::string>());
+                    QVariant value = node2variant<bool>(parameter.second);
+                    if(!value.isValid()) {
+                        value = node2variant<double>(parameter.second);
+                    }
+                    if(!value.isValid()) {
+                        value = node2variant<std::string>(parameter.second, [](const std::string &s) { return QVariant::fromValue(QString::fromStdString(s)); });
+                    }
+                    if(parameterName == "action") {
+                        mapping.action = value.toString();
+                    } else if(parameterName == "deviceName") {
+                        mapping.deviceName = value.toString();
+                    } else if(parameterName == "deviceType") {
+                        mapping.deviceType = value.toString();
+                    } else if(parameterName == "rotate") {
+                        mapping.rotate = value.toDouble();
+                    } else if(parameterName == "invert") {
+                        mapping.invert = value.toBool();
+                    } else {
+                        mapping.parameters[parameterName] = value;
+                    }
+                });
+                joypadsMappings[joypadName][indiServer][actionTrigger] = mapping;
+            });
+        });
+    });
 }
 
 void Mappings::joystickCallback(int joystickNumber, double magnitude, double angle)

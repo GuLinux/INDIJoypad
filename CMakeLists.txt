@@ -15,10 +15,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt5 COMPONENTS Widgets Network REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Network Widgets REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 pkg_check_modules(LIBINDI REQUIRED libindi)
 include_directories(
     ${LIBINDI_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIR}
 )
 
 set(CORE_SOURCES
@@ -47,7 +49,7 @@ set(CLI_PROJECT_SOURCES
 add_executable(INDIJoypad ${GUI_PROJECT_SOURCES})
 add_executable(INDIJoypad-cli ${CLI_PROJECT_SOURCES})
 
-set(COMMON_LIBRARIES Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network pthread ${LIBINDI_LIBRARIES} -lindiclientqt)
+set(COMMON_LIBRARIES Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network pthread ${LIBINDI_LIBRARIES} ${YAML_CPP_LIBRARIES} -lindiclientqt)
 
 target_link_libraries(INDIJoypad PRIVATE ${COMMON_LIBRARIES})
 target_link_libraries(INDIJoypad-cli PRIVATE ${COMMON_LIBRARIES})
