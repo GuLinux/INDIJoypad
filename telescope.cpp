@@ -78,7 +78,6 @@ void Telescope::setSlewSpeed()
 
 void Telescope::onJoystick(const Action<JoystickPayload> &action)
 {
-
 }
 
 void Telescope::onAxis(const Action<AxisPayload> &action)
@@ -89,9 +88,15 @@ void Telescope::onAxis(const Action<AxisPayload> &action)
             axisSpeed[axis] = QString();
             stopSlew(axis);
         } else {
-            auto slewSpeed = action.parameters.value("speed", magnitudeToSpeed(action.value.magnitude)).toString();
-            axisSpeed[axis] = slewSpeed;
-            setSlewSpeed();
+            auto slewSpeed = action.parameters.value("speed", "keep");
+            if(slewSpeed != "keep") {
+                if(slewSpeed == "ramping") {
+                    slewSpeed = magnitudeToSpeed(action.value.magnitude);
+                }
+                axisSpeed[axis] = slewSpeed.toString();
+                setSlewSpeed();
+            }
+
             static const QMap<QString, QMap<int8_t, QString>> directions {
                 { AXIS_DEC, { { AxisPayload::FORWARD, DIRECTION_N}, { AxisPayload::BACKWARD, DIRECTION_S}}},
                 { AXIS_RA, { { AxisPayload::FORWARD, DIRECTION_W}, { AxisPayload::BACKWARD, DIRECTION_E}}},

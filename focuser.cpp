@@ -52,14 +52,15 @@ void Focuser::onJoystick(const Action<JoystickPayload> &action)
 
 void Focuser::onAxis(const Action<AxisPayload> &action)
 {
-    auto minSteps = action.parameters.value("steps-min", 1).toInt();
-    auto maxSteps = action.parameters.value("steps-max", 10).toInt();
     auto repeat = action.parameters.value("repeat", 0.1).toDouble();
-
-    newSteps = (maxSteps - minSteps) * action.value.magnitude + minSteps;
+    if(action.parameters.contains("steps-min") && action.parameters.contains("steps-max")) {
+        auto minSteps = action.parameters.value("steps-min", 1).toInt();
+        auto maxSteps = action.parameters.value("steps-max", 10).toInt();
+        newSteps = (maxSteps - minSteps) * action.value.magnitude + minSteps;
+    } else {
+        newSteps = action.parameters.value("steps", 1).toInt();
+    }
     newDirection = action.value.direction == AxisPayload::FORWARD ? OUTWARDS : INWARDS;
-
-    qDebug() << name() << " onAxis: min=" << minSteps << ", max=" << maxSteps << ", repeat=" << repeat << ", steps=" << newSteps << ", direction=" << newDirection;
 
     if(action.value.magnitude == 0) {
         qDebug() << "Focuser: stopping repeat motion";
@@ -77,7 +78,22 @@ void Focuser::onAxis(const Action<AxisPayload> &action)
 
 void Focuser::onButton(const Action<ButtonPayload> &action)
 {
-
+    auto changeSteps = [this, &action] (bool increase) {
+        QVariant steps = action.parameters.value("steps", 1);
+        qDebug() << steps.type();
+        if(steps.type() == QVariant::List) {
+            qDebug() << "[list]changeSteps: " << steps.toList();
+        } else {
+            qDebug() << "[int]changeSteps: " << steps.toInt();
+        }
+    };
+    if(action.action == "increase-steps") {
+        changeSteps(true);
+    } else if(action.action == "decrease-steps") {
+        changeSteps(false);
+    } else if(action.action == "focus-in") {
+    } else if(action.action == "focus-out") {
+    }
 }
 
 /*

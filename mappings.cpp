@@ -58,6 +58,9 @@ QVariant node2variant(const YAML::Node &node, std::function<QVariant(const T&)> 
     }
 }
 
+QVariant node2variant2(const YAML::Node &node) {
+}
+
 void Mappings::loadYAML(const QString &filename)
 {
     YAML::Node mapping = YAML::LoadFile(filename.toStdString());
@@ -70,7 +73,12 @@ void Mappings::loadYAML(const QString &filename)
                 Mapping mapping;
                 std::for_each(actionsMapping.second.begin(), actionsMapping.second.end(), [=,&mapping](const YAML::iterator::value_type &parameter){
                     QString parameterName = QString::fromStdString(parameter.first.as<std::string>());
-                    QVariant value = node2variant<bool>(parameter.second);
+                    QVariant value;
+                    //value = node2variant<std::list<YAML::Node>>(parameter.second);
+
+                    //if(!value.isValid()) {
+                    value = node2variant<bool>(parameter.second);
+                    // }
                     if(!value.isValid()) {
                         value = node2variant<double>(parameter.second);
                     }

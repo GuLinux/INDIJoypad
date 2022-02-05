@@ -6,6 +6,11 @@ USB GAMEPAD 1.05:
         action: slew
         axis: WE
         invert: true
+        # Speed can be set to:
+        # - "keep": don't change speed (default if not specified)
+        # - INDI slew speed value (example: 1x, 2x, 4x, etc): set speed to the corresponding INDI switch
+        # - "ramping": changes speed from min to max depending on the joypad magnitude (valid for analog joysticks)
+        speed: ramping
 
     axis-1:
         deviceType: telescope
@@ -13,13 +18,35 @@ USB GAMEPAD 1.05:
         action: slew
         axis: NS
         invert: true
+        speed: ramping
+
+    axis-6:
+        deviceType: telescope
+        deviceName: Telescope Simulator
+        action: slew
+        axis: WE
+        invert: true
+        speed: 4x
+
+    axis-7:
+        deviceType: telescope
+        deviceName: Telescope Simulator
+        action: slew
+        axis: NS
+        invert: true
+        speed: 4x
 
     axis-2:
         deviceType: focuser
         deviceName: Focuser Simulator
         action: focus
+        # Steps range for analog axis
         steps-min: 1
         steps-max: 5
+        # If steps-min and steps-max are not specified, the "steps" parameter will be used instead, default to 1
+        # steps: 5
+        # For focusers, this will repeat the event while the axis is non zero. Default to 0.1 seconds. 0 to disable
+        repeat: 0.1
 
     axis-3:
         deviceType: focuser
@@ -27,9 +54,41 @@ USB GAMEPAD 1.05:
         action: focus
         steps-min: 10
         steps-max: 500
+        repeat: 0.1
         invert: true
 
+    button-4:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: increase-steps
+        repeat: 0
+        # WIP:
+        # steps: [1, 2, 5, 10, 30, 50, 100, 500]
+        # steps: 5
+
     button-1:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: decrease-steps
+        repeat: 0
+        # WIP:
+        # steps: [1, 2, 5, 10, 30, 50, 100, 500]
+        # steps: 5
+
+
+    button-3:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: focus-out
+        # steps: 5
+
+    button-0:
+        deviceType: focuser
+        deviceName: Focuser Simulator
+        action: focus-in
+        # steps: 5
+
+    button-10:
         deviceType: telescope
         deviceName: Telescope Simulator
         action: abort
