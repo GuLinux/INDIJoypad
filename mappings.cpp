@@ -28,7 +28,12 @@ void Mappings::loadJSON(const QString &filename)
     joypadsMappings.clear();
     QFile mappingsFile(filename);
     mappingsFile.open(QIODevice::ReadOnly);
-    auto jsonMappings = QJsonDocument::fromJson(mappingsFile.readAll()).toVariant().toMap();
+    loadJSON(mappingsFile.readAll());
+}
+
+void Mappings::loadJSON(const QByteArray &json)
+{
+    auto jsonMappings = QJsonDocument::fromJson(json).toVariant().toMap();
     for(auto &joypad: jsonMappings.keys()) {
         auto joypadMap = jsonMappings[joypad].toMap();
         for(auto indiServer: joypadMap.keys()) {
@@ -58,8 +63,6 @@ QVariant node2variant(const YAML::Node &node, std::function<QVariant(const T&)> 
     }
 }
 
-QVariant node2variant2(const YAML::Node &node) {
-}
 
 void Mappings::loadYAML(const QString &filename)
 {

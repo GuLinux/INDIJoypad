@@ -63,7 +63,7 @@ USB GAMEPAD 1.05:
         action: increase-steps
         repeat: 0
         # WIP:
-        # steps: [1, 2, 5, 10, 30, 50, 100, 500]
+        steps: [1, 2, 5, 10, 30, 50, 100, 500]
         # steps: 5
 
     button-1:
@@ -72,7 +72,7 @@ USB GAMEPAD 1.05:
         action: decrease-steps
         repeat: 0
         # WIP:
-        # steps: [1, 2, 5, 10, 30, 50, 100, 500]
+        steps: [1, 2, 5, 10, 30, 50, 100, 500]
         # steps: 5
 
 

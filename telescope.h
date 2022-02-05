@@ -11,6 +11,7 @@ class Telescope : public INDIDevice
 public:
     typedef std::shared_ptr<Telescope> ptr;
     Telescope(INDI::Telescope *telescope);
+    ~Telescope();
     bool hasDevice(INDI::BaseDevice *other) const;
     static const QString AXIS_RA;
     static const QString AXIS_DEC;
@@ -22,6 +23,7 @@ public:
 private:
     void slew(const QString &axis, const QString &direction);
     void stopSlew(const QString &axis);
+    void reloadSpeed();
     void abort();
     QString magnitudeToSpeed(double magnitude) const;
     void setSlewSpeed();

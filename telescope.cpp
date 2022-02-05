@@ -18,6 +18,10 @@ Telescope::Telescope(INDI::Telescope *telescope)
     qDebug() << "Telescope: " << name();
 }
 
+Telescope::~Telescope()
+{
+}
+
 bool Telescope::hasDevice(INDI::BaseDevice *other) const
 {
     return other == this->indiTelescope;
@@ -38,8 +42,31 @@ void Telescope::stopSlew(const QString &axis)
     client()->sendNewSwitch(axisProperty);
 }
 
+void Telescope::reloadSpeed()
+{
+    qDebug() << "Reloading slew speed";
+    auto dec = indiTelescope->getSwitch(AXIS_DEC.toStdString().c_str());
+    auto ra = indiTelescope->getSwitch(AXIS_RA.toStdString().c_str());
+    auto decDirection = dec->findOnSwitch();
+    auto raDirection = ra->findOnSwitch();
+    dec->reset();
+    ra->reset();
+    client()->sendNewSwitch(dec);
+    client()->sendNewSwitch(ra);
+    setSlewSpeed();
+    if(decDirection) {
+        dec->findWidgetByName(decDirection->name)->setState(ISS_ON);
+        client()->sendNewSwitch(dec);
+    }
+    if(raDirection) {
+        ra->findWidgetByName(raDirection->name)->setState(ISS_ON);
+        client()->sendNewSwitch(ra);
+    }
+}
+
 void Telescope::abort()
 {
+    // TELESCOPE_ABORT_MOTION.ABORT
     auto abortProperty = indiTelescope->getSwitch("TELESCOPE_ABORT_MOTION");
     if(abortProperty) {
         auto abortSwitch = abortProperty->findWidgetByName("ABORT");
@@ -109,8 +136,13 @@ void Telescope::onAxis(const Action<AxisPayload> &action)
 
 void Telescope::onButton(const Action<ButtonPayload> &action)
 {
+    qDebug() << "onButton: " << action.action << action.value.pressed << action.parameters;
     if(action.action == "abort" && action.value.pressed) {
         abort();
+        return;
+    }
+    if(action.action == "reload-speed" && action.value.pressed) {
+        reloadSpeed();
         return;
     }
 }

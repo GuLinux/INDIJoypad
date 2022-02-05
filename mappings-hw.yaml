@@ -5,21 +5,45 @@ USB GAMEPAD 1.05:
       deviceName: iOptron CEM40
       action: slew
       axis: WE
-      speed: 9x
+      speed: ramping
       invert: true
+
     axis-1:
       deviceType: telescope
       deviceName: iOptron CEM40
       action: slew
       axis: NS
-      speed: 9x
+      speed: ramping
       invert: true
+
+    axis-6:
+      deviceType: telescope
+      deviceName: iOptron CEM40
+      action: slew
+      axis: WE
+      invert: true
+      speed: 9x
+
+    axis-7:
+      deviceType: telescope
+      deviceName: iOptron CEM40
+      action: slew
+      axis: NS
+      invert: true
+      speed: 9x
+
+    button-6:
+      deviceType: telescope
+      deviceName: iOptron CEM40
+      action: reload-speed
+
     axis-2:
       deviceType: focuser
       deviceName: MyFocuserPro2
       action: focus
       steps-min: 1
       steps-max: 5
+
     axis-3:
       deviceType: focuser
       deviceName: MyFocuserPro2
@@ -27,7 +51,8 @@ USB GAMEPAD 1.05:
       steps-min: 1
       steps-max: 500
       invert: true
-    button-8:
+
+    button-10:
       deviceType: telescope
       deviceName: iOptron CEM40
       action: abort 
