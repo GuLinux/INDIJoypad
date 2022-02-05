@@ -38,6 +38,18 @@ void Telescope::stopSlew(const QString &axis)
     client()->sendNewSwitch(axisProperty);
 }
 
+void Telescope::abort()
+{
+    auto abortProperty = indiTelescope->getSwitch("TELESCOPE_ABORT_MOTION");
+    if(abortProperty) {
+        auto abortSwitch = abortProperty->findWidgetByName("ABORT");
+        if(abortSwitch) {
+            abortSwitch->setState(ISS_ON);
+            client()->sendNewSwitch(abortProperty);
+        }
+    }
+}
+
 QString Telescope::magnitudeToSpeed(double magnitude) const
 {
     auto slewRate = indiTelescope->getSwitch("TELESCOPE_SLEW_RATE");
@@ -86,10 +98,14 @@ void Telescope::onAxis(const Action<AxisPayload> &action)
             };
             slew(axis, directions[axis][action.value.direction]);
         }
+        return;
     }
 }
 
 void Telescope::onButton(const Action<ButtonPayload> &action)
 {
-
+    if(action.action == "abort" && action.value.pressed) {
+        abort();
+        return;
+    }
 }

@@ -82,11 +82,13 @@ void INDIClient::newMessage(INDI::BaseDevice *dp, int messageID)
 void INDIClient::serverConnected()
 {
     qDebug() << "serverConnected";
+    emit connected();
 }
 
 void INDIClient::serverDisconnected(int exit_code)
 {
     qDebug() << "serverDisconnected" << exit_code;
+    emit disconnected(exit_code);
 
 }
 

@@ -56,10 +56,19 @@ public:
         }
         const QString indiServerAddress = parser.value("indi-server");
         qDebug() << "CLI: indiServerAddress=" << indiServerAddress;
+
+        connect(&indiClient, &INDIClient::disconnected, this, &INDIJoypadCLI::exit, Qt::QueuedConnection);
+        connect(&indiClient, &INDIClient::connected, this, &INDIJoypadCLI::startEventListening, Qt::QueuedConnection);
         indiClient.connectServer();
-        mapping.load(parser.value("mappings"));
-        joystickDriver.Connect();
     }
+public slots:
+
+    void startEventListening() {
+        qDebug() << "Starting event listening";
+        mapping.load(parser.value("mappings"));
+        openJoypad();
+    }
+private:
 
     bool openJoypad() {
         if(!joystickDriver.Connect()) {

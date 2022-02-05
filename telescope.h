@@ -22,6 +22,7 @@ public:
 private:
     void slew(const QString &axis, const QString &direction);
     void stopSlew(const QString &axis);
+    void abort();
     QString magnitudeToSpeed(double magnitude) const;
     void setSlewSpeed();
 

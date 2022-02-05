@@ -40,7 +40,8 @@ private:
     QMap<QString, Focuser::ptr> _focusers;
     QString _server;
 signals:
-
+    void connected();
+    void disconnected(int);
 };
 
 #endif // INDICLIENT_H
