@@ -17,6 +17,7 @@ private:
     void loadJSON(const QString &filename);
     void loadJSON(const QByteArray &json);
     void loadYAML(const QString &filename);
+    void loadMappings(const QVariantMap &mappings);
     struct Mapping {
         QString action;
         QString deviceName;

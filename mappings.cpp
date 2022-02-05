@@ -34,25 +34,9 @@ void Mappings::loadJSON(const QString &filename)
 void Mappings::loadJSON(const QByteArray &json)
 {
     auto jsonMappings = QJsonDocument::fromJson(json).toVariant().toMap();
-    for(auto &joypad: jsonMappings.keys()) {
-        auto joypadMap = jsonMappings[joypad].toMap();
-        for(auto indiServer: joypadMap.keys()) {
-            auto indiServerMap = joypadMap[indiServer].toMap();
-            for(auto trigger: indiServerMap.keys()) {
-                auto actionMap = indiServerMap[trigger].toMap();
-                Mapping mapping{
-                    actionMap.take("action").toString(),
-                    actionMap.take("deviceName").toString(),
-                    actionMap.take("deviceType").toString(),
-                    actionMap.contains("rotate") ? actionMap.take("rotate").toDouble() : 0,
-                    actionMap.contains("invert") ? actionMap.take("invert").toBool() : false,
-                    actionMap,
-                };
-                joypadsMappings[joypad][indiServer][trigger] = mapping;
-            }
-        }
-    }
+    loadMappings(jsonMappings);
 }
+
 
 template<typename T>
 QVariant node2variant(const YAML::Node &node, std::function<QVariant(const T&)> convertFunction = [](const T &t){ return QVariant::fromValue(t); }) {
@@ -63,46 +47,63 @@ QVariant node2variant(const YAML::Node &node, std::function<QVariant(const T&)> 
     }
 }
 
+QVariant yamlNode2Variant(const YAML::Node &node) {
+
+    if(node.IsScalar()) {
+        QVariant value;
+        value = node2variant<bool>(node);
+        // }
+        if(!value.isValid()) {
+            value = node2variant<double>(node);
+        }
+        if(!value.isValid()) {
+            value = node2variant<std::string>(node, [](const std::string &s) { return QVariant::fromValue(QString::fromStdString(s)); });
+        }
+        return value;
+    }
+    if(node.IsSequence()) {
+        QVariantList value;
+        std::for_each(node.begin(), node.end(), [&value](const YAML::iterator::value_type &v) {
+            value.append(yamlNode2Variant(v));
+        });
+        return value;
+    }
+    if(node.IsMap()) {
+        QVariantMap value;
+        std::for_each(node.begin(), node.end(), [&value](const YAML::iterator::value_type &items) {
+            QString key = yamlNode2Variant(items.first).toString();
+            value[key] = yamlNode2Variant(items.second);
+        });
+        return value;
+    }
+    return {};
+}
+
 
 void Mappings::loadYAML(const QString &filename)
 {
     YAML::Node mapping = YAML::LoadFile(filename.toStdString());
-    std::for_each(mapping.begin(), mapping.end(), [=](const YAML::iterator::value_type &joypadMapping) {
-        QString joypadName = QString::fromStdString(joypadMapping.first.as<std::string>());
-        std::for_each(joypadMapping.second.begin(), joypadMapping.second.end(), [=](const YAML::iterator::value_type &indiServerMapping) {
-            QString indiServer = QString::fromStdString(indiServerMapping.first.as<std::string>());
-            std::for_each(indiServerMapping.second.begin(), indiServerMapping.second.end(), [=](const YAML::iterator::value_type &actionsMapping) {
-                QString actionTrigger = QString::fromStdString(actionsMapping.first.as<std::string>());
-                Mapping mapping;
-                std::for_each(actionsMapping.second.begin(), actionsMapping.second.end(), [=,&mapping](const YAML::iterator::value_type &parameter){
-                    QString parameterName = QString::fromStdString(parameter.first.as<std::string>());
-                    QVariant value;
-                    //value = node2variant<std::list<YAML::Node>>(parameter.second);
+    loadMappings(yamlNode2Variant(mapping).toMap());
+}
 
-                    //if(!value.isValid()) {
-                    value = node2variant<bool>(parameter.second);
-                    // }
-                    if(!value.isValid()) {
-                        value = node2variant<double>(parameter.second);
-                    }
-                    if(!value.isValid()) {
-                        value = node2variant<std::string>(parameter.second, [](const std::string &s) { return QVariant::fromValue(QString::fromStdString(s)); });
-                    }
-                    if(parameterName == "action") {
-                        mapping.action = value.toString();
-                    } else if(parameterName == "deviceName") {
-                        mapping.deviceName = value.toString();
-                    } else if(parameterName == "deviceType") {
-                        mapping.deviceType = value.toString();
-                    } else if(parameterName == "rotate") {
-                        mapping.rotate = value.toDouble();
-                    } else if(parameterName == "invert") {
-                        mapping.invert = value.toBool();
-                    } else {
-                        mapping.parameters[parameterName] = value;
-                    }
-                });
-                joypadsMappings[joypadName][indiServer][actionTrigger] = mapping;
+void Mappings::loadMappings(const QVariantMap &mappings)
+{
+    std::for_each(mappings.constKeyValueBegin(), mappings.constKeyValueEnd(), [=](const auto &joypad){
+        QString joypadKey = joypad.first;
+        std::for_each(joypad.second.toMap().constKeyValueBegin(), joypad.second.toMap().constKeyValueEnd(), [=](const auto &indiServer){
+            QString indiServerKey = indiServer.first;
+            std::for_each(indiServer.second.toMap().constKeyValueBegin(), indiServer.second.toMap().constKeyValueEnd(), [=](const auto &trigger){
+                QString triggerKey = trigger.first;
+                QVariantMap actionMap = trigger.second.toMap();
+                Mapping mapping{
+                    actionMap.take("action").toString(),
+                    actionMap.take("deviceName").toString(),
+                    actionMap.take("deviceType").toString(),
+                    actionMap.contains("rotate") ? actionMap.take("rotate").toDouble() : 0,
+                    actionMap.contains("invert") ? actionMap.take("invert").toBool() : false,
+                    actionMap,
+                };
+                joypadsMappings[joypadKey][indiServerKey][triggerKey] = mapping;
             });
         });
     });
