@@ -76,18 +76,15 @@ USB GAMEPAD 1.05:
       steps: [1, 2, 5, 10, 30, 50, 100, 500]
       # steps: 5
 
-
     button-3:
       deviceType: focuser
       deviceName: MyFocuserPro2
-      deviceName: Focuser Simulator
       action: focus-out
-      # steps: 5
+      steps: 5
 
     button-0:
       deviceType: focuser
       deviceName: MyFocuserPro2
-      deviceName: Focuser Simulator
       action: focus-in
-      # steps: 5
+      steps: 5
 

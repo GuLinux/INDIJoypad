@@ -14,8 +14,9 @@ private:
     void moveFocuser();
     INDI::Focuser *indiFocuser;
     std::unique_ptr<QTimer> repeatTimer;
-    int newSteps;
-    enum { INWARDS = -1, OUTWARDS = 1 } newDirection;
+    uint16_t movingSteps;
+    enum Direction { INWARDS = -1, OUTWARDS = 1 };
+    Direction movingDirection;
 
     // INDIDevice interface
 public slots:

@@ -24,22 +24,22 @@ void Focuser::moveFocuser()
         return;
     }
     if(absolutePositionProperty) {
-        qDebug() << "MoveFocuser::absolute" << newSteps << newDirection;
+        qDebug() << "MoveFocuser::absolute" << movingSteps << movingDirection;
 
         auto positionControl = absolutePositionProperty->at(0);
         auto currentPosition = positionControl->getValue();
-        auto newPosition = currentPosition + (newSteps * newDirection);
+        auto newPosition = currentPosition + (movingSteps * movingDirection);
         qDebug() << "Moving focuser to abs position " << newPosition;
         positionControl->setValue(newPosition);
         client()->sendNewNumber(absolutePositionProperty);
     } else if(relativePositionProperty) {
-        qDebug() << "MoveFocuser::relative" << newSteps << (newDirection == OUTWARDS ? "OUTWARDS" : "INWARDS");
+        qDebug() << "MoveFocuser::relative" << movingSteps << (movingDirection == OUTWARDS ? "OUTWARDS" : "INWARDS");
         auto direction = indiFocuser->getSwitch("FOCUS_MOTION");
         direction->reset();
-        direction->findWidgetByName(newDirection == OUTWARDS ? "FOCUS_OUTWARD" : "FOCUS_INWARD")->setState(ISS_ON);
+        direction->findWidgetByName(movingDirection == OUTWARDS ? "FOCUS_OUTWARD" : "FOCUS_INWARD")->setState(ISS_ON);
 
         auto position = relativePositionProperty->at(0);
-        position->setValue(abs(newSteps));
+        position->setValue(movingSteps);
 
         client()->sendNewSwitch(direction);
         client()->sendNewNumber(relativePositionProperty);
@@ -56,11 +56,11 @@ void Focuser::onAxis(const Action<AxisPayload> &action)
     if(action.parameters.contains("steps-min") && action.parameters.contains("steps-max")) {
         auto minSteps = action.parameters.value("steps-min", 1).toInt();
         auto maxSteps = action.parameters.value("steps-max", 10).toInt();
-        newSteps = (maxSteps - minSteps) * action.value.magnitude + minSteps;
+        movingSteps = (maxSteps - minSteps) * action.value.magnitude + minSteps;
     } else {
-        newSteps = action.parameters.value("steps", 1).toInt();
+        movingSteps = action.parameters.value("steps", 1).toInt();
     }
-    newDirection = action.value.direction == AxisPayload::FORWARD ? OUTWARDS : INWARDS;
+    movingDirection = action.value.direction == AxisPayload::FORWARD ? OUTWARDS : INWARDS;
 
     if(action.value.magnitude == 0) {
         qDebug() << "Focuser: stopping repeat motion";
@@ -78,21 +78,45 @@ void Focuser::onAxis(const Action<AxisPayload> &action)
 
 void Focuser::onButton(const Action<ButtonPayload> &action)
 {
+    qDebug() << "Focuser::onButton" << action.action << ", " << action.value.pressed << ", params=" << action.parameters;
     auto changeSteps = [this, &action] (bool increase) {
         QVariant steps = action.parameters.value("steps", 1);
-        qDebug() << steps.type();
         if(steps.type() == QVariant::List) {
-            qDebug() << "[list]changeSteps: " << steps.toList();
+            QVariantList sl = steps.toList();
+            QList<uint16_t> stepsList;
+
+            std::transform(sl.begin(), sl.end(), std::back_inserter(stepsList), [](const QVariant &v) { return v.toUInt(); });
+            qDebug() << "changeSteps: configured steps=" << stepsList;
+            stepsList.erase(std::remove_if(stepsList.begin(), stepsList.end(), [increase,this](uint16_t s){ return increase ? (s <= movingSteps) : (s >= movingSteps); }), stepsList.end());
+            std::sort(stepsList.begin(), stepsList.end());
+
+            if(stepsList.size() > 0) {
+                movingSteps = increase ? stepsList.first() : stepsList.last();
+                qDebug() << "changeSteps: result=" << movingSteps << "," << stepsList;
+            }
         } else {
-            qDebug() << "[int]changeSteps: " << steps.toInt();
+            int delta = steps.toInt() * (increase ? +1 : -1);
+            int64_t newSteps = static_cast<int64_t>(movingSteps) + delta;
+            movingSteps = std::max<int64_t>(std::min<int64_t>(newSteps, std::numeric_limits<uint16_t>::max()), 0);
+            qDebug() << "changeSteps: result=" << newSteps << movingSteps;
         }
     };
-    if(action.action == "increase-steps") {
+    if(action.action == "increase-steps" && action.value.pressed) {
         changeSteps(true);
-    } else if(action.action == "decrease-steps") {
+    } else if(action.action == "decrease-steps" && action.value.pressed) {
         changeSteps(false);
-    } else if(action.action == "focus-in") {
-    } else if(action.action == "focus-out") {
+    } else if(action.action == "focus-in" && action.value.pressed) {
+        movingDirection = INWARDS;
+        if(action.parameters.contains("steps")) {
+            movingSteps = action.parameters["steps"].toUInt();
+        }
+        moveFocuser();
+    } else if(action.action == "focus-out" && action.value.pressed) {
+        movingDirection = OUTWARDS;
+        if(action.parameters.contains("steps")) {
+            movingSteps = action.parameters["steps"].toUInt();
+        }
+        moveFocuser();
     }
 }
 
